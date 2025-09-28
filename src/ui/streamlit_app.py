@@ -99,12 +99,17 @@ class StreamlitApp:
         # 서비스 설명
         st.markdown("""
         ### 📋 서비스 소개
-        AWS Bedrock Claude 3.7 Sonnet 모델을 사용하여 상품 이미지를 자동으로 검수합니다.
+        AWS Bedrock Nova Pro/Lite 모델과 OpenCV를 활용하여 상품 이미지를 자동으로 검수합니다.
         
         **검수 기준:**
         - 상품 외 배경의 네모 테두리 강조 여부
         - 브랜드명 외의 불필요한 텍스트 포함 여부
         - 기타 상품 이미지 품질 기준
+        
+        **기술 스택:**
+        - 🤖 AI 모델: AWS Bedrock Nova Pro/Lite
+        - 🔍 이미지 처리: OpenCV
+        - 📊 데이터 저장: DynamoDB
         """)
         
         st.markdown("---")
