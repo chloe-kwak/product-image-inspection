@@ -153,6 +153,4 @@ streamlit run two_stage_app.py
 
 ---
 
-**개발사**: Claude Code Team
-**버전**: 1.0.0
-**최종 업데이트**: 2025년 9월 28일
+**개발자**: Chloe Kwak (younghwa@amazon.com)
