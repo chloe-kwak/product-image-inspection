@@ -4,10 +4,13 @@ OpenCV + Amazon Bedrock Nova AI를 활용한 2단계 하이브리드 이미지 �
 
 ## 🚀 주요 기능
 
-- **1단계**: OpenCV를 통한 정밀한 테두리 탐지 (모든 색상 대응)
+- **1단계**: OpenCV를 통한 정밀한 테두리 탐지
+  - 중앙 95% 마스킹으로 제품 영역 제외
+  - 9가지 색상 범위 지원
+  - Canny 엣지 검출 알고리즘
 - **2단계**: Nova AI를 통한 일반 품질 검수
 - **실시간 웹 인터페이스**: Streamlit 기반
-- **높은 정확도**: 테두리 탐지 100% 성공률
+- **높은 정확도**: 90% 테스트 통과율
 
 ## 📋 시스템 요구사항
 
@@ -27,23 +30,46 @@ OpenCV + Amazon Bedrock Nova AI를 활용한 2단계 하이브리드 이미지 �
 pip install -r requirements.txt
 ```
 
-### 2. 환경 변수 설정
-```bash
-# .env.example을 참고하여 .env 파일 생성
-cp .env.example .env
+### 2. 환경 변수 설정 ⚠️ **필수**
 
-# .env 파일 편집 (AWS 키 등 설정)
-nano .env
+**`.env` 파일이 없으면 애플리케이션이 실행되지 않습니다!**
+
+```bash
+# .env.example을 복사하여 .env 파일 생성
+cp .env.example .env
 ```
 
 ### 3. AWS 설정
-`.env` 파일에 다음 정보를 입력하세요:
+`.env` 파일을 열어 다음 정보를 입력하세요:
+
 ```bash
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
+# AWS 자격 증명 (필수)
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
 AWS_REGION=us-east-1
+
+# AI 모델 설정 (필수)
 BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
+
+# 프롬프트 버전 (선택)
+PROMPT_VERSION=v3.2
+
+# DynamoDB 테이블 (선택)
+DYNAMODB_TABLE_NAME=product-image-inspection
 ```
+
+#### 📌 필수 설정 항목
+- ✅ `AWS_ACCESS_KEY_ID` - AWS 액세스 키
+- ✅ `AWS_SECRET_ACCESS_KEY` - AWS 시크릿 키
+- ✅ `AWS_REGION` - AWS 리전
+- ✅ `BEDROCK_MODEL_ID` - 사용할 AI 모델
+
+#### 🔄 사용 가능한 모델
+- `us.amazon.nova-lite-v1:0` - 빠르고 경제적 (권장)
+- `us.amazon.nova-pro-v1:0` - 더 정확하고 상세한 분석
+- `us.anthropic.claude-3-7-sonnet-20250219-v1:0` - Claude 모델 (선택사항)
+
+**💡 모델 변경 방법**: `.env` 파일에서 `BEDROCK_MODEL_ID` 값을 변경하고 애플리케이션을 재시작하세요.
 
 ## 🖥️ 실행 방법
 
@@ -105,16 +131,24 @@ streamlit run two_stage_app.py
 - **보라색**: 자주색, 마젠타
 
 ### 탐지 기준
-- **가장자리 영역**: 이미지 경계 5% 영역
-- **색상 임계값**: 3% 이상 픽셀 비율
-- **신뢰도 임계값**: 8% 이상
+- **중앙 마스킹**: 95% (제품 영역 제외)
+- **가장자리 영역**: 최외곽 2.5%만 분석
+- **색상 범위**: 20% ~ 95% (제품 색상 제외)
+- **엣지 임계값**: 15% 이상
+- **신뢰도 임계값**: 15% 이상
+
+### 탐지 방식
+1. **색상 분석**: HSV 색공간에서 9가지 색상 범위 검사
+2. **엣지 검출**: Canny 알고리즘으로 경계선 탐지
+3. **중앙 제외**: 제품 영역(95%)을 마스킹하여 순수 배경만 분석
+4. **종합 판정**: 색상(50%) + 엣지(50%) 가중치로 최종 판정
 
 ## 📈 성능 지표
 
-- **테두리 탐지 정확도**: 100%
-- **처리 속도**: 이미지당 평균 2-3초
+- **테두리 탐지 정확도**: 90% (10개 테스트 기준)
+- **처리 속도**: 이미지당 평균 0.1초 (OpenCV)
 - **지원 형식**: JPG, PNG, WebP
-- **최대 이미지 크기**: 10MB
+- **최대 이미지 크기**: 제한 없음
 
 ## 🐛 문제 해결
 
@@ -152,5 +186,3 @@ streamlit run two_stage_app.py
 이 시스템은 상용 라이선스로 제공됩니다. 무단 복제 및 배포를 금지합니다.
 
 ---
-
-**개발자**: Chloe Kwak (younghwa@amazon.com)

@@ -44,3 +44,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Test results
+test_results_*.json
+test_report_*.md

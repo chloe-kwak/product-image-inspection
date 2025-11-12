@@ -217,312 +217,15 @@ class ImageHandler:
             'info': image_info,
             'raw_bytes': image_bytes
         }
-    
-    def create_center_canvas_transparent(self, image_bytes: bytes, resize_ratio: float = 0.3) -> bytes:
-        """
-        원본 크기의 투명 캔버스 중앙에 축소된 이미지를 배치합니다.
-        투명 배경으로 자연스러운 효과를 만들어 Nova가 더 정확히 인식하도록 합니다.
-        
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            resize_ratio: 축소 비율 (기본값: 0.3 = 30%)
-            
-        Returns:
-            bytes: 투명 배경 중앙 배치된 캔버스 이미지 바이트 데이터
-            
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
-        """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-        
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                original_format = img.format or 'JPEG'
-                original_width, original_height = img.size
-                
-                # 축소된 이미지 크기 계산
-                new_width = int(original_width * resize_ratio)
-                new_height = int(original_height * resize_ratio)
-                
-                # 이미지 축소
-                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # 투명도 지원 여부에 따라 캔버스 생성
-                if original_format.upper() == 'PNG':
-                    # PNG는 투명도 지원
-                    canvas = Image.new('RGBA', (original_width, original_height), (0, 0, 0, 0))
-                    if resized_img.mode != 'RGBA':
-                        resized_img = resized_img.convert('RGBA')
-                    canvas.paste(resized_img, ((original_width - new_width) // 2, (original_height - new_height) // 2), resized_img)
-                else:
-                    # JPEG는 흰 배경 사용 (투명도 미지원)
-                    canvas = Image.new('RGB', (original_width, original_height), 'white')
-                    canvas.paste(resized_img, ((original_width - new_width) // 2, (original_height - new_height) // 2))
-                
-                # 원본 형식으로 저장
-                with io.BytesIO() as output:
-                    canvas.save(output, format=original_format)
-                    return output.getvalue()
-                    
-        except Exception as e:
-            raise ValueError(f"투명 배경 중앙 배치 캔버스 생성 중 오류 발생: {str(e)}")
-    
-    def create_center_canvas_black(self, image_bytes: bytes, resize_ratio: float = 0.3) -> bytes:
-        """
-        원본 크기의 검은 캔버스 중앙에 축소된 이미지를 배치합니다.
-        검은 배경으로 더 강한 대비를 만들어 Nova가 테두리를 더 잘 인식하도록 합니다.
-        
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            resize_ratio: 축소 비율 (기본값: 0.3 = 30%)
-            
-        Returns:
-            bytes: 검은 배경 중앙 배치된 캔버스 이미지 바이트 데이터
-            
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
-        """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-        
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                original_width, original_height = img.size
-                
-                # 축소된 이미지 크기 계산
-                new_width = int(original_width * resize_ratio)
-                new_height = int(original_height * resize_ratio)
-                
-                # 이미지 축소
-                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # 원본 크기의 검은 캔버스 생성
-                canvas = Image.new('RGB', (original_width, original_height), 'black')
-                
-                # 중앙 위치 계산
-                x_offset = (original_width - new_width) // 2
-                y_offset = (original_height - new_height) // 2
-                
-                # 축소된 이미지를 캔버스 중앙에 배치
-                canvas.paste(resized_img, (x_offset, y_offset))
-                
-                # 바이트로 변환
-                with io.BytesIO() as output:
-                    canvas.save(output, format=img.format or 'PNG')
-                    return output.getvalue()
-                    
-        except Exception as e:
-            raise ValueError(f"검은 배경 중앙 배치 캔버스 생성 중 오류 발생: {str(e)}")
-    
-    def create_center_canvas(self, image_bytes: bytes, resize_ratio: float = 0.3) -> bytes:
-        """
-        원본 크기의 흰 캔버스 중앙에 축소된 이미지를 배치합니다.
-        테두리가 있다면 중앙으로 이동하여 Nova가 더 잘 인식하도록 합니다.
-        
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            resize_ratio: 축소 비율 (기본값: 0.3 = 30%)
-            
-        Returns:
-            bytes: 중앙 배치된 캔버스 이미지 바이트 데이터
-            
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
-        """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-        
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                original_width, original_height = img.size
-                
-                # 축소된 이미지 크기 계산
-                new_width = int(original_width * resize_ratio)
-                new_height = int(original_height * resize_ratio)
-                
-                # 이미지 축소
-                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # 원본 크기의 흰 캔버스 생성
-                canvas = Image.new('RGB', (original_width, original_height), 'white')
-                
-                # 중앙 위치 계산
-                x_offset = (original_width - new_width) // 2
-                y_offset = (original_height - new_height) // 2
-                
-                # 축소된 이미지를 캔버스 중앙에 배치
-                canvas.paste(resized_img, (x_offset, y_offset))
-                
-                # 바이트로 변환
-                with io.BytesIO() as output:
-                    canvas.save(output, format=img.format or 'PNG')
-                    return output.getvalue()
-                    
-        except Exception as e:
-            raise ValueError(f"중앙 배치 캔버스 생성 중 오류 발생: {str(e)}")
-    
-    def resize_30_percent(self, image_bytes: bytes) -> bytes:
-        """
-        이미지를 30% 크기로 축소합니다. (테두리를 더 중앙으로 이동시켜 Nova가 확실히 인식하도록)
-        
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            
-        Returns:
-            bytes: 30% 축소된 이미지 바이트 데이터
-            
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
-        """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-        
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                width, height = img.size
-                
-                # 30% 크기로 축소 (더 극단적인 변화)
-                new_width = int(width * 0.3)
-                new_height = int(height * 0.3)
-                
-                # 리샘플링으로 축소 (고품질 유지)
-                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # 바이트로 변환
-                with io.BytesIO() as output:
-                    resized_img.save(output, format=img.format or 'PNG')
-                    return output.getvalue()
-                    
-        except Exception as e:
-            raise ValueError(f"이미지 리사이즈 중 오류 발생: {str(e)}")
-    
-    def resize_50_percent(self, image_bytes: bytes) -> bytes:
-        """
-        이미지를 50% 크기로 축소합니다. (테두리를 중앙으로 이동시켜 Nova가 더 잘 인식하도록)
-        
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            
-        Returns:
-            bytes: 50% 축소된 이미지 바이트 데이터
-            
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
-        """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-        
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                width, height = img.size
-                
-                # 50% 크기로 축소
-                new_width = width // 2
-                new_height = height // 2
-                
-                # 리샘플링으로 축소 (고품질 유지)
-                resized_img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # 바이트로 변환
-                with io.BytesIO() as output:
-                    resized_img.save(output, format=img.format or 'PNG')
-                    return output.getvalue()
-                    
-        except Exception as e:
-            raise ValueError(f"이미지 리사이즈 중 오류 발생: {str(e)}")
-    
-    def crop_center_50_percent(self, image_bytes: bytes) -> bytes:
-        """
-        이미지 중앙 50% 영역을 크롭합니다.
-        
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            
-        Returns:
-            bytes: 크롭된 이미지 바이트 데이터
-            
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
-        """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-        
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                width, height = img.size
-                
-                # 중앙 50% 영역 계산
-                crop_width = width // 2
-                crop_height = height // 2
-                
-                left = (width - crop_width) // 2
-                top = (height - crop_height) // 2
-                right = left + crop_width
-                bottom = top + crop_height
-                
-                # 크롭 실행
-                cropped_img = img.crop((left, top, right, bottom))
-                
-                # 바이트로 변환
-                with io.BytesIO() as output:
-                    cropped_img.save(output, format=img.format or 'PNG')
-                    return output.getvalue()
-                    
-        except Exception as e:
-            raise ValueError(f"이미지 크롭 중 오류 발생: {str(e)}")
-    
-    def add_black_padding(self, image_bytes: bytes, padding_ratio: float = 0.2) -> bytes:
-        """
-        원본 이미지 주변에 검은 패딩을 추가합니다.
-        테두리 탐지를 위해 명확한 검은 배경과 대비를 만듭니다.
 
-        Args:
-            image_bytes: 원본 이미지 바이트 데이터
-            padding_ratio: 패딩 비율 (기본값: 0.2 = 20%)
-
-        Returns:
-            bytes: 검은 패딩이 추가된 이미지 바이트 데이터
-
-        Raises:
-            ValueError: 이미지 처리 중 오류 발생
+    def detect_border_opencv(self, image_bytes: bytes, center_mask_ratio: float = 0.95) -> Tuple[bool, str, float]:
         """
-        if not image_bytes:
-            raise ValueError("이미지 데이터가 비어있습니다")
-
-        try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                original_format = img.format or 'JPEG'
-                original_width, original_height = img.size
-
-                # 패딩 크기 계산
-                padding_width = int(original_width * padding_ratio)
-                padding_height = int(original_height * padding_ratio)
-
-                # 새 캔버스 크기 (원본 + 양쪽 패딩)
-                new_width = original_width + (padding_width * 2)
-                new_height = original_height + (padding_height * 2)
-
-                # 검은 캔버스 생성
-                canvas = Image.new('RGB', (new_width, new_height), 'black')
-
-                # 원본 이미지를 캔버스 중앙에 배치
-                canvas.paste(img, (padding_width, padding_height))
-
-                # 바이트로 변환
-                with io.BytesIO() as output:
-                    canvas.save(output, format=original_format)
-                    return output.getvalue()
-
-        except Exception as e:
-            raise ValueError(f"검은 패딩 추가 중 오류 발생: {str(e)}")
-
-    def detect_border_opencv(self, image_bytes: bytes) -> Tuple[bool, str, float]:
-        """
-        OpenCV를 사용한 테두리 탐지
+        OpenCV를 사용한 테두리 탐지 (극단적 마스킹 적용)
 
         Args:
             image_bytes: 이미지 바이트 데이터
+            center_mask_ratio: 중앙 제외 비율 (기본값: 0.95 = 중앙 95% 제외)
+                              제품이 화면을 거의 꽉 채우는 경우 대비
 
         Returns:
             Tuple[bool, str, float]: (테두리 존재 여부, 상세 분석, 신뢰도)
@@ -542,15 +245,26 @@ class ImageHandler:
 
             height, width = img_bgr.shape[:2]
 
-            # 1. 가장자리 영역 정의 (전체의 5%)
-            border_thickness = max(5, min(width, height) // 20)
+            # 1. 가장자리 영역 정의 (극단적으로 좁게 - 최외곽 2-3%만)
+            # 제품이 화면을 꽉 채워도 순수 배경 테두리만 분석
+            border_thickness = max(3, min(width, height) // 40)  # 약 2.5%
 
-            # 가장자리 마스크 생성
+            # 가장자리 마스크 생성 (최외곽만)
             border_mask = np.zeros((height, width), dtype=np.uint8)
             border_mask[:border_thickness, :] = 255  # 상단
             border_mask[-border_thickness:, :] = 255  # 하단
             border_mask[:, :border_thickness] = 255  # 좌측
             border_mask[:, -border_thickness:] = 255  # 우측
+            
+            # 2. 중앙 영역 마스킹 (제품 영역 제외 - 거의 전체)
+            # 제품이 화면 꽉 차는 경우 대비하여 중앙 거의 전체 제외
+            center_width = int(width * center_mask_ratio)
+            center_height = int(height * center_mask_ratio)
+            center_x = (width - center_width) // 2
+            center_y = (height - center_height) // 2
+            
+            # 중앙 영역을 마스크에서 제거 (0으로 설정)
+            border_mask[center_y:center_y+center_height, center_x:center_x+center_width] = 0
 
             # 2. HSV 색공간에서 색상 분석
             hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
@@ -586,14 +300,17 @@ class ImageHandler:
 
             detected_colors = []
 
-            # 유채색 탐지
+            # 유채색 탐지 (더 엄격한 기준)
             for color_name, (lower, upper) in color_ranges.items():
                 mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
                 border_color_pixels = np.sum(cv2.bitwise_and(mask, border_mask) > 0)
 
                 if total_border_pixels > 0:
                     ratio = border_color_pixels / total_border_pixels
-                    if ratio > 0.03:  # 3% 이상이면 의미있는 색상
+                    # 20% ~ 95% 범위만 테두리로 판단
+                    # - 20% 미만: 너무 적음 (노이즈)
+                    # - 95% 이상: 제품 자체 색상 (테두리 아님)
+                    if 0.20 < ratio < 0.95:
                         detected_colors.append((color_name, ratio))
 
             # 무채색 탐지 비활성화 (너무 민감해서 자연 배경도 잡음)
@@ -609,26 +326,31 @@ class ImageHandler:
             border_edges = cv2.bitwise_and(edges, border_mask)
             edge_ratio = np.sum(border_edges > 0) / total_border_pixels if total_border_pixels > 0 else 0
 
-            # 4. 판정 로직
+            # 4. 판정 로직 (색상 + 엣지 조합)
             has_border = False
             confidence = 0.0
             analysis_details = []
 
-            # 색상 기반 판정
+            # 색상 기반 판정 (20% 이상만 탐지)
             if detected_colors:
                 color_confidence = sum(ratio for _, ratio in detected_colors)
                 analysis_details.append(f"색상 탐지: {', '.join([f'{name}({ratio:.1%})' for name, ratio in detected_colors])}")
-                confidence += color_confidence * 0.7
+                confidence += color_confidence * 0.5  # 가중치 낮춤
 
-            # 엣지 기반 판정
-            if edge_ratio > 0.1:  # 10% 이상 강한 엣지
+            # 엣지 기반 판정 (더 중요하게)
+            if edge_ratio > 0.15:  # 15% 이상 강한 엣지
                 analysis_details.append(f"강한 경계선: {edge_ratio:.1%}")
-                confidence += edge_ratio * 0.3
+                confidence += edge_ratio * 0.5  # 가중치 높임
 
-            # 최종 판정 (더 민감하게)
-            has_border = confidence > 0.08  # 8% 임계값으로 낮춤
+            # 최종 판정: 색상 + 엣지 조합으로 판단
+            # 색상만으로는 부족, 강한 경계선도 있어야 테두리로 판정
+            has_border = confidence > 0.15  # 15% 임계값 (더 엄격하게)
 
             analysis = "; ".join(analysis_details) if analysis_details else "특별한 테두리 패턴 없음"
+            
+            # 디버깅 정보 추가
+            if detected_colors or edge_ratio > 0.1:
+                analysis += f" [중앙 {int(center_mask_ratio*100)}% 제외, 최외곽 {border_thickness}px만 분석]"
 
             return has_border, analysis, confidence
 

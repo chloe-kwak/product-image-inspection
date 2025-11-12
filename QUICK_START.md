@@ -3,17 +3,38 @@
 ## 🚀 5분 안에 시작하기
 
 ### 1단계: 환경 설정 (2분)
+
+⚠️ **중요**: `.env` 파일이 없으면 실행되지 않습니다!
+
 ```bash
 # 1. 의존성 설치
 pip install -r requirements.txt
 
-# 2. 환경 파일 복사
+# 2. 환경 파일 생성 (필수!)
 cp .env.example .env
 
-# 3. AWS 정보 입력 (.env 파일 편집)
-AWS_ACCESS_KEY_ID=your_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_here
+# 3. .env 파일을 열어서 AWS 정보 입력
+# 텍스트 에디터로 .env 파일 편집:
 ```
+
+**`.env` 파일에 입력할 내용:**
+```bash
+# AWS 자격 증명 (필수)
+AWS_ACCESS_KEY_ID=실제_액세스_키_입력
+AWS_SECRET_ACCESS_KEY=실제_시크릿_키_입력
+AWS_REGION=us-east-1
+
+# AI 모델 선택 (필수)
+BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
+
+# 기타 설정 (선택)
+PROMPT_VERSION=v3.2
+DYNAMODB_TABLE_NAME=product-image-inspection
+```
+
+**💡 모델 선택 가이드:**
+- `nova-lite-v1:0` - 빠르고 경제적 (권장)
+- `nova-pro-v1:0` - 더 정확한 분석
 
 ### 2단계: 실행 (1분)
 ```bash
@@ -42,12 +63,23 @@ streamlit run two_stage_app.py
 
 ## 🔧 문제 해결
 
-### AWS 연결 오류 시
+### ❌ ".env 파일이 없습니다" 에러
+```bash
+# 해결 방법:
+cp .env.example .env
+# 그 다음 .env 파일을 열어서 AWS 키 입력
+```
+
+### ❌ "Missing required environment variables" 에러
+- `.env` 파일에 필수 항목이 누락됨
+- 확인 필요: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `BEDROCK_MODEL_ID`
+
+### ❌ AWS 연결 오류
 - AWS 키가 올바른지 확인
 - Bedrock 서비스 권한 확인
 - 리전 설정 확인 (기본: us-east-1)
 
-### 이미지 로딩 오류 시
+### ❌ 이미지 로딩 오류
 - 이미지 URL이 공개 접근 가능한지 확인
 - HTTPS URL 사용 권장
 
